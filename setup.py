@@ -21,6 +21,12 @@ def read(*filenames, **kwargs):
 
 long_description = read('README.md')
 
+setup_path = os.path.dirname(__file__)
+reqs_file = open(os.path.join(setup_path, 'requirements.txt'), 'r')
+reqs = reqs_file.readlines()
+reqs_file.close()
+
+
 class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -39,10 +45,7 @@ setup(
     license='MIT',
     author='Ben Howes',
     tests_require=['pytest'],
-    install_requires=['Flask>=0.10.1',
-                    'Flask-SQLAlchemy>=1.0',
-                    'SQLAlchemy==0.8.2',
-                    ],
+    install_requires=reqs,
     cmdclass={'test': PyTest},
     author_email='ben@zoetrope.io',
     description='An MQTT client which will send configured MQTT messages to keen IO as events for later analysis.',
@@ -61,5 +64,10 @@ setup(
         ],
     extras_require={
         'testing': ['pytest'],
+    },
+    entry_points={
+        'console_scripts': [
+            'keenmqtt = keenmqtt.app:main',
+        ]
     }
 )

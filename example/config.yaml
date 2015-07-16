@@ -1,0 +1,12 @@
+keen:
+	project_id: xxxx
+	write_key: yyyy
+	read_key: zzzz
+	master_key: abcd
+
+mqtt:
+	broker_url: mqtt://192.168.0.1:8000
+
+events:
+	- mqtt_sub: home/*/humidity
+	  keen_event: humidity
