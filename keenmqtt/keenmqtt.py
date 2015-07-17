@@ -30,7 +30,7 @@ class KeenMQTT:
 		if keen_client:
 			self.keen_client = keen_client
 		else:
-			selg.connect_keen(settings)
+			self.connect_keen(settings)
 
 		if 'collection_mappings' in settings:
 			for subscription in settings['collection_mappings']:
