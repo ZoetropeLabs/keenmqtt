@@ -4,11 +4,13 @@ import paho.mqtt.client as mqtt
 from keen import KeenClient
 import json
 from datetime import datetime
+import logging
 
 class KeenMQTT:
 
 	def __init__(self):
 		self.ready = False
+		self.running = False
 		self.collection_mapping = {}
 
 	def setup(self, mqtt_client=None, keen_client=None, settings=None):
@@ -30,16 +32,27 @@ class KeenMQTT:
 		self.ready = True
 
 	def connect_mqtt_client(self, settings):
-		self.mqtt_client = mqtt()
+		mqtt_settings = settings['mqtt']
+		if not mqtt_settings['client_id']:
+			import uuid
+			mqtt_settings['client_id'] = uuid.uuid4()
+
+		self.mqtt_client = mqtt(mqtt_settings['client_id'])
 		self.mqtt_client.on_message = self.on_mqtt_message
 		self.mqtt_client.on_connect = self.on_mqtt_connect
+		if 'user' in mqtt_settings and len(mqtt_settings['user']):
+			self.mqtt_client.username_pw_set(mqtt_settings['user'], mqtt_settings['pass'])
+		self.mqtt_client.connect(mqtt_settings['host'], mqtt_settings['port'])
 
 	def connect_keen(self, settings):
-		self.keen_client = KeenClient()
+		self.keen_client = KeenClient(**settings['keen'])
 
 	def on_mqtt_connect(self):
 		"""Called when an MQTT connection is made."""
-		pass #TODO
+		logging.info("MQTT Client connected")
+		for subscription in self.collection_mapping:
+			self.mqtt_client.subscribe(subscription)
+		self.ready = True
 
 	def on_mqtt_message(self, mosq, obj, mqtt_message):
 		"""Called when an MQTT message is recieved."""
@@ -54,8 +67,19 @@ class KeenMQTT:
 					if self.process_time(event, topic, message):
 						self.push_event(collection, event)
 
-	def update():
-		"""Call to process any outstanding MQTT messages."""
+	def start():
+		"""Automatically loop in a background thread."""
+		self.running = True
+		self.mqtt_client.loop_start()
+
+	def stop():
+		""" diconect and stop. """
+		self.mqtt_client.loop_stop()
+		self.running = False
+
+	def step():
+		if self.running:
+			raise BackgroundRunningException("Cannot perform a step whilst background loop is running.")
 		self.mqtt_client.loop()
 
 	def process_topic(self, event, topic):
@@ -98,7 +122,7 @@ class KeenMQTT:
 		return False
 
 	def add_collection_mapping(self,sub,collection):
-		"""Add a subecription to event collection mapping.
+		"""Add a subcription to event collection mapping.
 
 		This will overide existing subscriptions if present.
 
@@ -191,4 +215,10 @@ class KeenMQTT:
 	
 	def push_event(self, collection, event):
 		assert self.ready == True
+		logging.debug("Saving event to collection {collection}: '{event}'".format(collection=collection, event=event))
 		self.keen_client.add_event(collection, event)
+
+class BackgroundRunningException(Exception):
+	""" Used when the user tries to run in the foreground whilst
+	a background loop is already running."""
+	pass
