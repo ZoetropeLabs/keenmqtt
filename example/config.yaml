@@ -1,12 +1,12 @@
-keen:
-	project_id: xxxx
-	write_key: yyyy
-	read_key: zzzz
-	master_key: abcd
+#keen:
+#    project_id: xxxx
+#    write_key: yyyy
+#    read_key: zzzz
+#    master_key: aaaa
 
 mqtt:
-	broker_url: mqtt://192.168.0.1:8000
+    host: 127.0.0.1
+    port: 1883
 
-events:
-	- mqtt_sub: home/*/humidity
-	  keen_event: humidity
+collection_mappings:
+    'humidity/+': humidity
