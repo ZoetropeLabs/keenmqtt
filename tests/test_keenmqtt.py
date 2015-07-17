@@ -105,8 +105,5 @@ class TestKeenMQTTMethods:
 		# Expect no problems
 		iso8601.parse_date(timestring)
 
-class TestKeenMQTTMocks:
-	pass
-
 class Struct:
 	pass

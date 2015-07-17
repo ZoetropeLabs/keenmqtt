@@ -6,6 +6,8 @@ import json
 from datetime import datetime
 import logging
 
+logger = logging.getLogger('keenmqtt')
+
 class KeenMQTT:
 
 	def __init__(self):
@@ -28,16 +30,22 @@ class KeenMQTT:
 		if keen_client:
 			self.keen_client = keen_client
 		else:
-			self.connect_keen(settings)
+			selg.connect_keen(settings)
+
+		if 'collection_mappings' in settings:
+			for subscription in settings['collection_mappings']:
+				collection = settings['collection_mappings'][subscription]
+				self.add_collection_mapping(subscription, collection)
+
 		self.ready = True
 
 	def connect_mqtt_client(self, settings):
 		mqtt_settings = settings['mqtt']
-		if not mqtt_settings['client_id']:
+		if 'client_id' not in mqtt_settings:
 			import uuid
-			mqtt_settings['client_id'] = uuid.uuid4()
+			mqtt_settings['client_id'] = str(uuid.uuid4())
 
-		self.mqtt_client = mqtt(mqtt_settings['client_id'])
+		self.mqtt_client = mqtt.Client(mqtt_settings['client_id'])
 		self.mqtt_client.on_message = self.on_mqtt_message
 		self.mqtt_client.on_connect = self.on_mqtt_connect
 		if 'user' in mqtt_settings and len(mqtt_settings['user']):
@@ -45,11 +53,14 @@ class KeenMQTT:
 		self.mqtt_client.connect(mqtt_settings['host'], mqtt_settings['port'])
 
 	def connect_keen(self, settings):
-		self.keen_client = KeenClient(**settings['keen'])
+		if 'keen' in settings:
+			self.keen_client = KeenClient(**settings['keen'])
+		else:
+			self.keen_client = KeenClient()
 
-	def on_mqtt_connect(self):
+	def on_mqtt_connect(self, c, client, userdata, rc):
 		"""Called when an MQTT connection is made."""
-		logging.info("MQTT Client connected")
+		logger.info("MQTT Client connected")
 		for subscription in self.collection_mapping:
 			self.mqtt_client.subscribe(subscription)
 		self.ready = True
@@ -67,17 +78,17 @@ class KeenMQTT:
 					if self.process_time(event, topic, message):
 						self.push_event(collection, event)
 
-	def start():
+	def start(self):
 		"""Automatically loop in a background thread."""
 		self.running = True
 		self.mqtt_client.loop_start()
 
-	def stop():
+	def stop(self):
 		""" diconect and stop. """
 		self.mqtt_client.loop_stop()
 		self.running = False
 
-	def step():
+	def step(self):
 		if self.running:
 			raise BackgroundRunningException("Cannot perform a step whilst background loop is running.")
 		self.mqtt_client.loop()
@@ -215,7 +226,7 @@ class KeenMQTT:
 	
 	def push_event(self, collection, event):
 		assert self.ready == True
-		logging.debug("Saving event to collection {collection}: '{event}'".format(collection=collection, event=event))
+		logger.debug("Saving event to collection {collection}: '{event}'".format(collection=collection, event=event))
 		self.keen_client.add_event(collection, event)
 
 class BackgroundRunningException(Exception):
