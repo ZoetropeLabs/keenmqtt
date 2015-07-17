@@ -1,4 +1,3 @@
-
 from keenmqtt import KeenMQTT
 import iso8601
 
@@ -8,15 +7,52 @@ class TestKeenMQTTMethods:
 	def setup_method(self, _):
 		self.keenmqtt = KeenMQTT()
 
+	def test_on_mqtt_message(self, mocker):
+		"""Test full message processing, up to keen IO level."""
+		timestamp = u"2015-07-17T15:19:26.782672"
+		self.keenmqtt.add_collection_mapping("home/exact", "exact")
+		mocker.patch.object(self.keenmqtt, 'push_event', autospec=True)
+		mocker.patch.object(self.keenmqtt, 'get_time', autospec=True, return_value=timestamp)
+		mqtt = Struct()
+		mqtt.topic = "home/exact"
+		mqtt.payload = '{"test1": 120, "test2": "Hello World!", "test3":true, "test4":null}'
+		collection = 'exact'
+		event = {
+			'mqtt_topic': 'home/exact',
+			u"test1": 120, 
+			u"test2": u"Hello World!",
+			u"test3": True,
+			u"test4": None,
+			'keen': {
+				'timestamp': timestamp
+			}
+		}
+		self.keenmqtt.on_mqtt_message({}, {}, mqtt)
+		self.keenmqtt.push_event.assert_called_once_with(collection, event)
+
 	def test_process_topic(self):
+		"""Check that the original topic is added to the event."""
 		event = {}
 		topic = "topic"
 		ret_bool = self.keenmqtt.process_topic(event, topic)
 		assert ret_bool == True
 		assert event['mqtt_topic'] == topic
 
-	def test_process_collection_exact(self):
+	def test_process_collection(self):
+		"""Test matching some different topic subscriptions.
+
+		Gradually add more subsciptions and check it sill works.
+		"""
 		assert len(self.keenmqtt.collection_mapping) == 0
+		self.keenmqtt.add_collection_mapping("home/exact", "exact")
+		assert self.keenmqtt.process_collection("home/exact", {}) == "exact"
+		self.keenmqtt.add_collection_mapping("away/+", "away")
+		assert self.keenmqtt.process_collection("home/exact", {}) == "exact"
+		assert self.keenmqtt.process_collection("away/nonexact", {}) == "away"
+		self.keenmqtt.add_collection_mapping("wayaway/#", "wayaway")
+		assert self.keenmqtt.process_collection("home/exact", {}) == "exact"
+		assert self.keenmqtt.process_collection("away/nonexact", {}) == "away"
+		assert self.keenmqtt.process_collection("wayaway/non/exact/test", {}) == "wayaway"
 
 	def test_add_collection_mapping(self):
 		"""Test adding and matching basic subscription."""
@@ -70,4 +106,7 @@ class TestKeenMQTTMethods:
 		iso8601.parse_date(timestring)
 
 class TestKeenMQTTMocks:
+	pass
+
+class Struct:
 	pass

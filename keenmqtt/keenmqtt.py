@@ -49,8 +49,8 @@ class KeenMQTT:
 		event = {}
 		collection = self.process_collection(topic, message)
 		if collection:
-			if self.process_topic(event, message, topic):
-				if self.process_message(event, message):
+			if self.process_topic(event, topic):
+				if self.process_payload(event, topic, message):
 					if self.process_time(event, topic, message):
 						self.push_event(collection, event)
 
