@@ -58,3 +58,6 @@ target/
 
 #Sublime project
 *.sublime-*
+
+#Private config with keenIO keys
+config.yaml
