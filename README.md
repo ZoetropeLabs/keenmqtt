@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ZoetropeLabs/keenmqtt.svg?branch=master)](https://travis-ci.org/ZoetropeLabs/keenmqtt)
+
 # keenmqtt
 A MQTT client which will send configured MQTT messages to keen IO as events for later analysis.
 
@@ -26,10 +28,32 @@ Running the stand alone package requires a config file, see `example/config.yaml
 After installing, run the following to log events:
 
 ```bash
-	keenmqtt config.yaml
+	keenmqtt -c config.yaml
 ```
 
 ### In your program
+keenMQTT has been specifically designed so that almost any part of the pipeline can be overriden or customised.
+
+The source is well documented, take a look in `keenmqtt/keenmqtt.py` for the good stuff.
+
+#### Custom payload formats
+As an example; if you had a sensor which publishes an ascii format sensor reading, you can define a custom payload decoder for topics which match that sensor value as follows:
+
+```python
+from keenmqtt import KeenMQTT
+
+class CustomDecoder(KeenMQTT):
+	def decode_payload(self, topic, payload):
+		"""Decode a plain ASCII format sensor reading"""
+		if 'humidity' in payload:
+			event = {
+				"value": int(payload)
+			}
+		else:
+			#Assume default JSON encoding
+			event = KeenMQTT.decode_payload(self, topic, payload)
+		return event
+```
 
 ## Contributing
 
@@ -41,7 +65,7 @@ After installing, run the following to log events:
 
 ## History
 
-TODO: Write history
+0.0.1: Working version of the CLI app.
 
 ## Credits
 
