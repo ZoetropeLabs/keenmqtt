@@ -1,0 +1,12 @@
+#keen:
+#    project_id: xxxx
+#    write_key: yyyy
+#    read_key: zzzz
+#    master_key: aaaa
+
+mqtt:
+    host: 127.0.0.1
+    port: 1883
+
+collection_mappings:
+    'humidity/+': humidity
