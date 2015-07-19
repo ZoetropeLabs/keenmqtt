@@ -5,26 +5,32 @@ import io
 import codecs
 import os
 import sys
-
-import keenmqtt
+import re
 
 here = os.path.abspath(os.path.dirname(__file__))
 
 def read(*filenames, **kwargs):
-    encoding = kwargs.get('encoding', 'utf-8')
     sep = kwargs.get('sep', '\n')
     buf = []
     for filename in filenames:
-        with io.open(filename, encoding=encoding) as f:
+        with io.open(os.path.join(here, filename)) as f:
             buf.append(f.read())
     return sep.join(buf)
 
 long_description = read('README.md')
 
-setup_path = os.path.dirname(__file__)
-reqs_file = open(os.path.join(setup_path, 'requirements.txt'), 'r')
-reqs = reqs_file.readlines()
+reqs_file = open(os.path.join(here, 'requirements.txt'), 'r')
+reqs = [req.strip() for req in reqs_file.readlines()]
 reqs_file.close()
+print(reqs)
+
+def find_version(*file_paths):
+    version_file = codecs.open(os.path.join(here, *file_paths), 'r').read()
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 
 class PyTest(TestCommand):
@@ -40,7 +46,7 @@ class PyTest(TestCommand):
 
 setup(
     name='keenmqtt',
-    version=keenmqtt.__version__,
+    version=find_version('keenmqtt', '__init__.py'),
     url='https://github.com/ZoetropeImaging/keenmqtt',
     license='MIT',
     author='Ben Howes',
