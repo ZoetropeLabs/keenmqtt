@@ -50,7 +50,7 @@ setup(
     url='https://github.com/ZoetropeImaging/keenmqtt',
     license='MIT',
     author='Ben Howes',
-    tests_require=['pytest'],
+    tests_require=['pytest', 'pytest-mock', 'iso8601'],
     install_requires=reqs,
     cmdclass={'test': PyTest},
     author_email='ben@zoetrope.io',
@@ -69,7 +69,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],
     extras_require={
-        'testing': ['pytest'],
+        'testing': ['pytest', 'pytest-mock', 'iso8601'],
     },
     entry_points={
         'console_scripts': [
