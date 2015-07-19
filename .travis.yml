@@ -4,4 +4,4 @@ python:
 install: 
     - "pip install -r requirements.txt --use-mirrors"
 script: 
-    - "coverage run --source=keenmqtt setup.py test"
+    - "python setup.py test"
