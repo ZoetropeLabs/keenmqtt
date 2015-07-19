@@ -2,22 +2,17 @@
 
 import logging
 import yaml
-from optparse import OptionParser
 import time
+import click
 
 from keenmqtt import KeenMQTT
 
 
-if __name__ == '__main__':
+@click.command()
+@click.option('-c', '--config', default="config.yaml", help="Relative path to config file, defaults to config.yaml.")
+def main(config):
 
-	parser = OptionParser()
-	parser.add_option("-c", "--config", dest="config",
-		help="relative path to config file, defaults to config.yaml",
-		default="config.yaml")
-
-	(options, args) = parser.parse_args()
-
-	with open(options.config) as configfp:
+	with open(config) as configfp:
 		config = yaml.load(configfp)
 
 	logging.basicConfig(level=logging.DEBUG)
@@ -34,3 +29,6 @@ if __name__ == '__main__':
 	except KeyboardInterrupt() as e:
 		logging.info("shutting down")
 		keenmqtt.stop()
+
+if __name__ == '__main__':
+    main()
