@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ZoetropeLabs/keenmqtt.svg?branch=master)](https://travis-ci.org/ZoetropeLabs/keenmqtt) [![Documentation Status](https://readthedocs.org/projects/keenmqtt/badge/?version=latest)](https://readthedocs.org/projects/keenmqtt/?badge=latest)
+[![Build Status](https://travis-ci.org/ZoetropeLabs/keenmqtt.svg?branch=master)](https://travis-ci.org/ZoetropeLabs/keenmqtt) [![Documentation Status](https://readthedocs.org/projects/keenmqtt/badge/?version=latest)](https://readthedocs.org/projects/keenmqtt/?badge=latest) [![Coverage Status](https://coveralls.io/repos/ZoetropeLabs/keenmqtt/badge.svg?branch=master&service=github)](https://coveralls.io/github/ZoetropeLabs/keenmqtt?branch=master)
 
 # keenmqtt
 A MQTT client which will send configured MQTT messages to keen IO as events for later analysis.
