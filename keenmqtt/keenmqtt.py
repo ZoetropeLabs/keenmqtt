@@ -107,7 +107,7 @@ class KeenMQTT:
 			event (dict): The event dictionary for this mqtt message.
 			topic (str): The topic string.
 
-		Returns:
+		Return:
 			bool: A Boolean indicating if this message should continue through the pipeline. Return
 			``False`` to cancel the processing of this event and stop it from being saved in keen.
 		"""
@@ -121,12 +121,11 @@ class KeenMQTT:
 		the associated string. Could also be based on event contents.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
 
 		Return:
-			A string indicating the Keen IO collection which this event should be pushed to, or 
+			str: A string indicating the Keen IO collection which this event should be pushed to, or 
 			false if a matching event collection could not be found.
 		"""
 		for subscription in self.collection_mapping:
@@ -140,12 +139,11 @@ class KeenMQTT:
 		This will overide existing subscriptions if present.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			sub: The string subscription pattern.
-			collection: The sting event collection.
+			sub (str): The string subscription pattern.
+			collection (str): The sting event collection.
 
 		Return:
-			None.
+			None
 		"""
 		self.collection_mapping[sub] = collection
 
@@ -157,9 +155,8 @@ class KeenMQTT:
 		extracted here.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			topic: The topic string.
-			payload: Raw MQTT payload.
+			topic (str): The topic string.
+			payload (str): Raw MQTT payload.
 
 		Returns:
 			An array of dictionaries containing the decoded MQTT payload.
@@ -175,13 +172,12 @@ class KeenMQTT:
 		Perform any required translations to the payload of the MQTT message, such as removing
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
-			message: the decoded MQTT payload
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
+			message (dict): the decoded MQTT payload
 
 		Returns:
-			A Boolean indicating if this message should continue through the pipeline. Return
+			bool: A Boolean indicating if this message should continue through the pipeline. Return
 			``False`` to cancel the processing of this event and stop it from being saved in Keen IO.
 		"""
 		event.update(message)
@@ -194,13 +190,12 @@ class KeenMQTT:
 		timestamped by Keen IO, set it here.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
-			message: The message dictionary.	
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
+			message (dict): The message dictionary.	
 
 		Returns:
-			A Boolean indicating if this message should continue through the pipeline. Return
+			bool: A Boolean indicating if this message should continue through the pipeline. Return
 			``False`` to cancel the processing of this event and stop it from being saved in Keen IO.
 		"""
 		iso_datetime = self.get_time(topic, message)
@@ -217,16 +212,23 @@ class KeenMQTT:
 		or to generate a timestamp. By default, the current time will be fetched.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			topic: The topic string.
-			message: The message dictionary.	
+			topic (str): The topic string.
+			message (dict): The message dictionary.	
 
 		Returns:
-			A string containing ISO-8601 string.
+			str: A string containing ISO-8601 string.
 		"""
 		return datetime.now().isoformat()
 	
 	def push_event(self, collection, event):
+		"""Thin wrapper around Keen IO API object.
+
+		Args:
+			collection (str): The collection string to push to
+			event (dict): The complete event to push
+		Returns:
+			None
+		"""
 		assert self.ready == True
 		logger.debug("Saving event to collection {collection}: '{event}'".format(collection=collection, event=event))
 		self.keen_client.add_event(collection, event)
