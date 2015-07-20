@@ -21,9 +21,16 @@ class KeenMQTT:
 		Normally called with a settings object containing `keen` and `mqtt` keys
 		with dictionary values of settings.
 
+		Args:
+			mqtt_client Optional[class]: An instance of an Paho MQTT client class.
+			keen_client Optional[class]: An instance of a KeenClient.
+			settings Optional[dict]: A settings dict, normally loaded from a config.yaml file.
+		Return:
+			None
 		"""
 		if mqtt_client:
 			self.mqtt_client = mqtt_client
+			self.register_subscriptions()
 		else:
 			self.connect_mqtt_client(settings)
 
@@ -40,6 +47,16 @@ class KeenMQTT:
 		self.ready = True
 
 	def connect_mqtt_client(self, settings):
+		"""Setup MQTT client.
+
+		Please note that the MQTT client will not actually connect until either ``step`` or ``start``
+		has been called.
+
+		Args:
+			settings Optional[dict]: The settings object, such as one read from config.yaml
+		Return:
+			None
+		"""
 		mqtt_settings = settings['mqtt']
 		if 'client_id' not in mqtt_settings:
 			import uuid
@@ -53,20 +70,39 @@ class KeenMQTT:
 		self.mqtt_client.connect(mqtt_settings['host'], mqtt_settings['port'])
 
 	def connect_keen(self, settings):
+		"""Setup the Keen IO client.
+
+		Args:
+			settings Optional[dict]: The settings object, such as one read from config.yaml
+		Return:
+			None
+		"""
 		if 'keen' in settings:
 			self.keen_client = KeenClient(**settings['keen'])
 		else:
 			self.keen_client = KeenClient()
 
 	def on_mqtt_connect(self, c, client, userdata, rc):
-		"""Called when an MQTT connection is made."""
+		"""Called when an MQTT connection is made.
+
+		See the Paha MQTT client documentation ``on_connect`` documentation for arguments.
+		"""
 		logger.info("MQTT Client connected")
-		for subscription in self.collection_mapping:
-			self.mqtt_client.subscribe(subscription)
+		self.register_subscriptions()
 		self.ready = True
 
+	def register_subscriptions(self):
+		"""This should always be called since re-subscribes after any
+		unexpected disconnects.
+		"""
+		for subscription in self.collection_mapping:
+			self.mqtt_client.subscribe(subscription)
+
 	def on_mqtt_message(self, mosq, obj, mqtt_message):
-		"""Called when an MQTT message is recieved."""
+		"""Called when an MQTT message is recieved.
+
+		See the Paha MQTT client documentation ``on_message`` documentation for arguments.
+		"""
 		topic = mqtt_message.topic
 		payload = mqtt_message.payload
 		messages = self.decode_payload(topic, payload)
@@ -87,11 +123,16 @@ class KeenMQTT:
 		self.mqtt_client.loop_start()
 
 	def stop(self):
-		""" diconect and stop. """
+		"""Disconnect and stop. """
 		self.mqtt_client.loop_stop()
 		self.running = False
 
 	def step(self):
+		"""Do a single MQTT step.
+
+		Use this if you're not running keenmqtt in a background thread with ``start``/``stop``
+
+		"""
 		if self.running:
 			raise BackgroundRunningException("Cannot perform a step whilst background loop is running.")
 		self.mqtt_client.loop()
