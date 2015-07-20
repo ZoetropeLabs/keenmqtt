@@ -101,15 +101,14 @@ class KeenMQTT:
 
 		If the topic contains pertinant information, such as the device ID or location,
 		this method can be overriden to perform any translation. By default, a key called
-		``mqtt_topic`` will be added to the event dictionary.
+		``mqtt_topic`` containing the topic string will be added to the event dictionary.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
 
 		Returns:
-			A Boolean indicating if this message should continue through the pipeline. Return
+			bool: A Boolean indicating if this message should continue through the pipeline. Return
 			``False`` to cancel the processing of this event and stop it from being saved in keen.
 		"""
 		event['mqtt_topic'] = topic
