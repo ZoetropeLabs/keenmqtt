@@ -53,6 +53,8 @@ class TestKeenMQTTMethods:
 		assert self.keenmqtt.process_collection("home/exact", {}) == "exact"
 		assert self.keenmqtt.process_collection("away/nonexact", {}) == "away"
 		assert self.keenmqtt.process_collection("wayaway/non/exact/test", {}) == "wayaway"
+		# Delibarately use bad topic
+		assert self.keenmqtt.process_collection("home/sdfsdfdf", {}) == False
 
 	def test_add_collection_mapping(self):
 		"""Test adding and matching basic subscription."""
@@ -69,8 +71,9 @@ class TestKeenMQTTMethods:
 		test2 = u"Hello World!"
 		test3 = True
 		test4 = None
-		decoded_payload = self.keenmqtt.decode_payload("test", json_string)
-		assert isinstance(decoded_payload, dict)
+		decoded_payloads = self.keenmqtt.decode_payload("test", json_string)
+		assert isinstance(decoded_payloads, list)
+		decoded_payload = decoded_payloads[0]
 		assert decoded_payload[u"test1"] == test1
 		assert decoded_payload[u"test2"] == test2
 		assert decoded_payload[u"test3"] == test3

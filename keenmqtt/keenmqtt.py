@@ -21,9 +21,16 @@ class KeenMQTT:
 		Normally called with a settings object containing `keen` and `mqtt` keys
 		with dictionary values of settings.
 
+		Args:
+			mqtt_client Optional[class]: An instance of an Paho MQTT client class.
+			keen_client Optional[class]: An instance of a KeenClient.
+			settings Optional[dict]: A settings dict, normally loaded from a config.yaml file.
+		Return:
+			None
 		"""
 		if mqtt_client:
 			self.mqtt_client = mqtt_client
+			self.register_subscriptions()
 		else:
 			self.connect_mqtt_client(settings)
 
@@ -40,6 +47,16 @@ class KeenMQTT:
 		self.ready = True
 
 	def connect_mqtt_client(self, settings):
+		"""Setup MQTT client.
+
+		Please note that the MQTT client will not actually connect until either ``step`` or ``start``
+		has been called.
+
+		Args:
+			settings Optional[dict]: The settings object, such as one read from config.yaml
+		Return:
+			None
+		"""
 		mqtt_settings = settings['mqtt']
 		if 'client_id' not in mqtt_settings:
 			import uuid
@@ -53,30 +70,52 @@ class KeenMQTT:
 		self.mqtt_client.connect(mqtt_settings['host'], mqtt_settings['port'])
 
 	def connect_keen(self, settings):
+		"""Setup the Keen IO client.
+
+		Args:
+			settings Optional[dict]: The settings object, such as one read from config.yaml
+		Return:
+			None
+		"""
 		if 'keen' in settings:
 			self.keen_client = KeenClient(**settings['keen'])
 		else:
 			self.keen_client = KeenClient()
 
 	def on_mqtt_connect(self, c, client, userdata, rc):
-		"""Called when an MQTT connection is made."""
+		"""Called when an MQTT connection is made.
+
+		See the Paha MQTT client documentation ``on_connect`` documentation for arguments.
+		"""
 		logger.info("MQTT Client connected")
-		for subscription in self.collection_mapping:
-			self.mqtt_client.subscribe(subscription)
+		self.register_subscriptions()
 		self.ready = True
 
+	def register_subscriptions(self):
+		"""This should always be called since re-subscribes after any
+		unexpected disconnects.
+		"""
+		for subscription in self.collection_mapping:
+			self.mqtt_client.subscribe(subscription)
+
 	def on_mqtt_message(self, mosq, obj, mqtt_message):
-		"""Called when an MQTT message is recieved."""
+		"""Called when an MQTT message is recieved.
+
+		See the Paha MQTT client documentation ``on_message`` documentation for arguments.
+		"""
 		topic = mqtt_message.topic
 		payload = mqtt_message.payload
-		message = self.decode_payload(topic, payload)
-		event = {}
-		collection = self.process_collection(topic, message)
-		if collection:
-			if self.process_topic(event, topic):
-				if self.process_payload(event, topic, message):
-					if self.process_time(event, topic, message):
-						self.push_event(collection, event)
+		messages = self.decode_payload(topic, payload)
+		
+		if len(messages):
+			for message in messages:
+				event = {}
+				collection = self.process_collection(topic, message)
+				if collection:
+					if self.process_topic(event, topic):
+						if self.process_payload(event, topic, message):
+							if self.process_time(event, topic, message):
+								self.push_event(collection, event)
 
 	def start(self):
 		"""Automatically loop in a background thread."""
@@ -84,11 +123,16 @@ class KeenMQTT:
 		self.mqtt_client.loop_start()
 
 	def stop(self):
-		""" diconect and stop. """
+		"""Disconnect and stop. """
 		self.mqtt_client.loop_stop()
 		self.running = False
 
 	def step(self):
+		"""Do a single MQTT step.
+
+		Use this if you're not running keenmqtt in a background thread with ``start``/``stop``
+
+		"""
 		if self.running:
 			raise BackgroundRunningException("Cannot perform a step whilst background loop is running.")
 		self.mqtt_client.loop()
@@ -98,15 +142,14 @@ class KeenMQTT:
 
 		If the topic contains pertinant information, such as the device ID or location,
 		this method can be overriden to perform any translation. By default, a key called
-		``mqtt_topic`` will be added to the event dictionary.
+		``mqtt_topic`` containing the topic string will be added to the event dictionary.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
 
-		Returns:
-			A Boolean indicating if this message should continue through the pipeline. Return
+		Return:
+			bool: A Boolean indicating if this message should continue through the pipeline. Return
 			``False`` to cancel the processing of this event and stop it from being saved in keen.
 		"""
 		event['mqtt_topic'] = topic
@@ -119,12 +162,11 @@ class KeenMQTT:
 		the associated string. Could also be based on event contents.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
 
 		Return:
-			A string indicating the Keen IO collection which this event should be pushed to, or 
+			str: A string indicating the Keen IO collection which this event should be pushed to, or 
 			false if a matching event collection could not be found.
 		"""
 		for subscription in self.collection_mapping:
@@ -138,12 +180,11 @@ class KeenMQTT:
 		This will overide existing subscriptions if present.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			sub: The string subscription pattern.
-			collection: The sting event collection.
+			sub (str): The string subscription pattern.
+			collection (str): The sting event collection.
 
 		Return:
-			None.
+			None
 		"""
 		self.collection_mapping[sub] = collection
 
@@ -155,17 +196,16 @@ class KeenMQTT:
 		extracted here.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			topic: The topic string.
-			payload: Raw MQTT payload.
+			topic (str): The topic string.
+			payload (str): Raw MQTT payload.
 
 		Returns:
-			A dictionary containing the decoded MQTT payload.
+			An array of dictionaries containing the decoded MQTT payload.
 
 		Raises:
 			ValueError: Whent the JSON payload cannot be parsed.
 		"""
-		return json.loads(payload)
+		return [json.loads(payload)]
 
 	def process_payload(self, event, topic, message):
 		"""Process an incoming MQTT message's payload.
@@ -173,13 +213,12 @@ class KeenMQTT:
 		Perform any required translations to the payload of the MQTT message, such as removing
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
-			message: the decoded MQTT payload
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
+			message (dict): the decoded MQTT payload
 
 		Returns:
-			A Boolean indicating if this message should continue through the pipeline. Return
+			bool: A Boolean indicating if this message should continue through the pipeline. Return
 			``False`` to cancel the processing of this event and stop it from being saved in Keen IO.
 		"""
 		event.update(message)
@@ -192,13 +231,12 @@ class KeenMQTT:
 		timestamped by Keen IO, set it here.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			event: The event dictionary for this mqtt message.
-			topic: The topic string.
-			message: The message dictionary.	
+			event (dict): The event dictionary for this mqtt message.
+			topic (str): The topic string.
+			message (dict): The message dictionary.	
 
 		Returns:
-			A Boolean indicating if this message should continue through the pipeline. Return
+			bool: A Boolean indicating if this message should continue through the pipeline. Return
 			``False`` to cancel the processing of this event and stop it from being saved in Keen IO.
 		"""
 		iso_datetime = self.get_time(topic, message)
@@ -215,16 +253,23 @@ class KeenMQTT:
 		or to generate a timestamp. By default, the current time will be fetched.
 
 		Args:
-			self: KeenMQTT instance, or subclass.
-			topic: The topic string.
-			message: The message dictionary.	
+			topic (str): The topic string.
+			message (dict): The message dictionary.	
 
 		Returns:
-			A string containing ISO-8601 string.
+			str: A string containing ISO-8601 string.
 		"""
 		return datetime.now().isoformat()
 	
 	def push_event(self, collection, event):
+		"""Thin wrapper around Keen IO API object.
+
+		Args:
+			collection (str): The collection string to push to
+			event (dict): The complete event to push
+		Returns:
+			None
+		"""
 		assert self.ready == True
 		logger.debug("Saving event to collection {collection}: '{event}'".format(collection=collection, event=event))
 		self.keen_client.add_event(collection, event)
