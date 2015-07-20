@@ -48,7 +48,7 @@ from keenmqtt import KeenMQTT
 class CustomDecoder(KeenMQTT):
 	def decode_payload(self, topic, payload):
 		"""Decode a plain ASCII format sensor reading"""
-		if 'humidity' in payload:
+		if 'humidity' in topic:
 			event = {
 				"value": int(payload)
 			}

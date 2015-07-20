@@ -1,7 +1,7 @@
 """ Keen mqtt relay class """
 
 import paho.mqtt.client as mqtt
-from keen import KeenClient
+import keen
 import json
 from datetime import datetime
 import logging
@@ -78,9 +78,9 @@ class KeenMQTT:
 			None
 		"""
 		if 'keen' in settings:
-			self.keen_client = KeenClient(**settings['keen'])
+			self.keen_client = keen.KeenClient(**settings['keen'])
 		else:
-			self.keen_client = KeenClient()
+			self.keen_client = keen
 
 	def on_mqtt_connect(self, c, client, userdata, rc):
 		"""Called when an MQTT connection is made.
