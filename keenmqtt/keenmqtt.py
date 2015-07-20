@@ -69,14 +69,17 @@ class KeenMQTT:
 		"""Called when an MQTT message is recieved."""
 		topic = mqtt_message.topic
 		payload = mqtt_message.payload
-		message = self.decode_payload(topic, payload)
-		event = {}
-		collection = self.process_collection(topic, message)
-		if collection:
-			if self.process_topic(event, topic):
-				if self.process_payload(event, topic, message):
-					if self.process_time(event, topic, message):
-						self.push_event(collection, event)
+		messages = self.decode_payload(topic, payload)
+		
+		if len(messages):
+			for message in messages:
+				event = {}
+				collection = self.process_collection(topic, message)
+				if collection:
+					if self.process_topic(event, topic):
+						if self.process_payload(event, topic, message):
+							if self.process_time(event, topic, message):
+								self.push_event(collection, event)
 
 	def start(self):
 		"""Automatically loop in a background thread."""
@@ -160,12 +163,12 @@ class KeenMQTT:
 			payload: Raw MQTT payload.
 
 		Returns:
-			A dictionary containing the decoded MQTT payload.
+			An array of dictionaries containing the decoded MQTT payload.
 
 		Raises:
 			ValueError: Whent the JSON payload cannot be parsed.
 		"""
-		return json.loads(payload)
+		return [json.loads(payload)]
 
 	def process_payload(self, event, topic, message):
 		"""Process an incoming MQTT message's payload.
