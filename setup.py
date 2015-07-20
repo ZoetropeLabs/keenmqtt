@@ -17,12 +17,16 @@ def read(*filenames, **kwargs):
             buf.append(f.read())
     return sep.join(buf)
 
-long_description = read('README.md')
+try:
+    from pypandoc import convert
+    read_md = lambda f: convert(f, 'rst')
+except ImportError:
+    print("warning: pypandoc module not found, could not convert Markdown to RST")
+    read_md = lambda f: open(f, 'r').read()
 
 reqs_file = open(os.path.join(here, 'requirements.txt'), 'r')
 reqs = [req.strip() for req in reqs_file.readlines()]
 reqs_file.close()
-print(reqs)
 
 def find_version(*file_paths):
     version_file = codecs.open(os.path.join(here, *file_paths), 'r').read()
@@ -55,7 +59,7 @@ setup(
     cmdclass={'test': PyTest},
     author_email='ben@zoetrope.io',
     description='An MQTT client which will send configured MQTT messages to keen IO as events for later analysis.',
-    long_description=long_description,
+    long_description=read_md('README.md'),
     packages=['keenmqtt'],
     include_package_data=True,
     platforms='any',
