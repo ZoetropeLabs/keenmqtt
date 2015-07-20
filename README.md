@@ -38,7 +38,6 @@ After installing, run the following to log events:
 keenMQTT has been specifically designed so that almost any part of the pipeline can be overriden or customised.
 
 The source is well documented, [see readthedocs](http://keenmqtt.readthedocs.org/en/latest/keenmqtt.html#module-keenmqtt.keenmqtt)
- [![Documentation Status](https://readthedocs.org/projects/keenmqtt/badge/?version=latest)](https://readthedocs.org/projects/keenmqtt/?badge=latest)
 
 **Example: Custom payload formats**
 As an example; if you had a sensor which publishes an ascii format sensor reading, you can define a custom payload decoder for topics which match that sensor value as follows:
