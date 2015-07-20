@@ -53,6 +53,8 @@ class TestKeenMQTTMethods:
 		assert self.keenmqtt.process_collection("home/exact", {}) == "exact"
 		assert self.keenmqtt.process_collection("away/nonexact", {}) == "away"
 		assert self.keenmqtt.process_collection("wayaway/non/exact/test", {}) == "wayaway"
+		# Delibarately use bad topic
+		assert self.keenmqtt.process_collection("home/sdfsdfdf", {}) == False
 
 	def test_add_collection_mapping(self):
 		"""Test adding and matching basic subscription."""
