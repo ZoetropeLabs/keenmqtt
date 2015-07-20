@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/ZoetropeLabs/keenmqtt.svg?branch=master)](https://travis-ci.org/ZoetropeLabs/keenmqtt)
+[![Build Status](https://travis-ci.org/ZoetropeLabs/keenmqtt.svg?branch=master)](https://travis-ci.org/ZoetropeLabs/keenmqtt) [![Documentation Status](https://readthedocs.org/projects/keenmqtt/badge/?version=latest)](https://readthedocs.org/projects/keenmqtt/?badge=latest)
 
 # keenmqtt
 A MQTT client which will send configured MQTT messages to keen IO as events for later analysis.
@@ -37,7 +37,8 @@ After installing, run the following to log events:
 ### In your program
 keenMQTT has been specifically designed so that almost any part of the pipeline can be overriden or customised.
 
-The source is well documented, take a look in `keenmqtt/keenmqtt.py` for the good stuff.
+The source is well documented, [see readthedocs](http://keenmqtt.readthedocs.org/en/latest/keenmqtt.html#module-keenmqtt.keenmqtt)
+ [![Documentation Status](https://readthedocs.org/projects/keenmqtt/badge/?version=latest)](https://readthedocs.org/projects/keenmqtt/?badge=latest)
 
 **Example: Custom payload formats**
 As an example; if you had a sensor which publishes an ascii format sensor reading, you can define a custom payload decoder for topics which match that sensor value as follows:
