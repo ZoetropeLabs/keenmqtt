@@ -2,4 +2,4 @@
 #from . import keenmqtt
 from .keenmqtt import KeenMQTT, BackgroundRunningException
 
-__version__ = '0.0.6'
+__version__ = '0.0.7'
