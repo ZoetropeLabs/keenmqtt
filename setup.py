@@ -9,14 +9,6 @@ import re
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-def read(*filenames, **kwargs):
-    sep = kwargs.get('sep', '\n')
-    buf = []
-    for filename in filenames:
-        with io.open(os.path.join(here, filename)) as f:
-            buf.append(f.read())
-    return sep.join(buf)
-
 try:
     from pypandoc import convert
     read_md = lambda f: convert(f, 'rst')
@@ -68,7 +60,7 @@ setup(
         'Programming Language :: Python',
         'Natural Language :: English',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Topic :: Software Development :: Libraries :: Python Modules',
         ],

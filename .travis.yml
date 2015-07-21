@@ -1,11 +1,18 @@
 language: python
 python:
-- '2.7'
-- '3.4'
-install:
-- pip install -r requirements.txt --use-mirrors
-script:
-- python setup.py test
+    - "2.7"
+    - "3.4"
+    - "pypy"
+    - "pypy3"
+install: 
+    - "pip install -r requirements.txt --use-mirrors"
+    - "pip install coveralls"
+script: 
+    - "coverage run --source=keenmqtt setup.py test"
+notifications:
+  slack: zoetrope:482UogKFnS2tBTvDl7NX9daa
+after_success:
+  coveralls
 deploy:
   provider: pypi
   user: benhowes

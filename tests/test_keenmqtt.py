@@ -1,4 +1,6 @@
-from keenmqtt import KeenMQTT
+import pytest
+from keenmqtt import KeenMQTT, BackgroundRunningException
+import keen
 import iso8601
 
 class TestKeenMQTTMethods:
@@ -6,6 +8,22 @@ class TestKeenMQTTMethods:
 
 	def setup_method(self, _):
 		self.keenmqtt = KeenMQTT()
+
+	def test_on_mqtt_connect(self, mocker):
+		mocker.patch.object(self.keenmqtt, "register_subscriptions")
+		self.keenmqtt.on_mqtt_connect(None,None,None,None)
+		assert self.keenmqtt.ready == True
+		self.keenmqtt.register_subscriptions.assert_any_call()
+
+	def test_register_subscription(self, mocker):
+		def dummy_sub(topic):
+			pass
+		self.keenmqtt.mqtt_client = Struct()
+		self.keenmqtt.mqtt_client.subscribe = dummy_sub
+		mocker.patch.object(self.keenmqtt.mqtt_client, "subscribe")
+		self.keenmqtt.add_collection_mapping('foo', 'bar')
+		self.keenmqtt.register_subscriptions()
+		self.keenmqtt.mqtt_client.subscribe.assert_called_once_with('foo')
 
 	def test_on_mqtt_message(self, mocker):
 		"""Test full message processing, up to keen IO level."""
@@ -30,6 +48,39 @@ class TestKeenMQTTMethods:
 		self.keenmqtt.on_mqtt_message({}, {}, mqtt)
 		self.keenmqtt.push_event.assert_called_once_with(collection, event)
 
+	def test_start(self, mocker):
+		def dummy_start():
+			pass
+		self.keenmqtt.mqtt_client = Struct()
+		self.keenmqtt.mqtt_client.loop_start = dummy_start
+		mocker.patch.object(self.keenmqtt.mqtt_client, "loop_start")
+		self.keenmqtt.start()
+		assert self.keenmqtt.running == True
+		self.keenmqtt.mqtt_client.loop_start.assert_any_call()
+
+	def test_stop(self, mocker):
+		def dummy_stop():
+			pass
+		self.keenmqtt.mqtt_client = Struct()
+		self.keenmqtt.mqtt_client.loop_stop = dummy_stop
+		mocker.patch.object(self.keenmqtt.mqtt_client, "loop_stop")
+		self.keenmqtt.stop()
+		assert self.keenmqtt.running == False
+		self.keenmqtt.mqtt_client.loop_stop.assert_any_call()
+
+	def test_step(self,mocker):
+		def dummy_loop():
+			pass
+		self.keenmqtt.running = True
+		with pytest.raises(BackgroundRunningException):
+			self.keenmqtt.step()
+		self.keenmqtt.running = False
+		self.keenmqtt.mqtt_client = Struct()
+		self.keenmqtt.mqtt_client.loop = dummy_loop
+		mocker.patch.object(self.keenmqtt.mqtt_client, "loop")
+		self.keenmqtt.step()
+		self.keenmqtt.mqtt_client.loop.assert_any_call()
+
 	def test_process_topic(self):
 		"""Check that the original topic is added to the event."""
 		event = {}
@@ -53,6 +104,8 @@ class TestKeenMQTTMethods:
 		assert self.keenmqtt.process_collection("home/exact", {}) == "exact"
 		assert self.keenmqtt.process_collection("away/nonexact", {}) == "away"
 		assert self.keenmqtt.process_collection("wayaway/non/exact/test", {}) == "wayaway"
+		# Delibarately use bad topic
+		assert self.keenmqtt.process_collection("home/sdfsdfdf", {}) == False
 
 	def test_add_collection_mapping(self):
 		"""Test adding and matching basic subscription."""
@@ -69,8 +122,9 @@ class TestKeenMQTTMethods:
 		test2 = u"Hello World!"
 		test3 = True
 		test4 = None
-		decoded_payload = self.keenmqtt.decode_payload("test", json_string)
-		assert isinstance(decoded_payload, dict)
+		decoded_payloads = self.keenmqtt.decode_payload("test", json_string)
+		assert isinstance(decoded_payloads, list)
+		decoded_payload = decoded_payloads[0]
 		assert decoded_payload[u"test1"] == test1
 		assert decoded_payload[u"test2"] == test2
 		assert decoded_payload[u"test3"] == test3
