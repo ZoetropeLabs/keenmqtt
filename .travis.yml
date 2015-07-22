@@ -6,13 +6,16 @@ python:
     - "pypy3"
 install: 
     - "pip install -r requirements.txt --use-mirrors"
-    - "pip install coveralls"
+    - "pip install coveralls pypandoc"
 script: 
     - "coverage run --source=keenmqtt setup.py test"
 notifications:
   slack: zoetrope:482UogKFnS2tBTvDl7NX9daa
 after_success:
   coveralls
+addons:
+  apt_packages:
+    - pandoc
 deploy:
   provider: pypi
   user: benhowes
