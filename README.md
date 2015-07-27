@@ -3,8 +3,12 @@
 # keenmqtt
 A MQTT client which will send configured MQTT messages to keen IO as events for later analysis.
 
+![System Diagram of keenmqtt](docs/system_diagram.png)
+
 ### The problem
 IoT data platforms are often a big investment in time and sometimes money, so often a simple MQTT set up is used. This should not prevent one from being able to perform historical analysis of data points.
+
+See the **[blog article](https://zoetrope.io/tech-blog/simple-mqtt-iot-logging)** with a live example.
 
 ### The solution
 keenmqtt is a simple bridge which will listen for specified MQTT messages and log them on your KeenIO project. This complete history of events will allow you to:
