@@ -3,8 +3,12 @@
 # keenmqtt
 A MQTT client which will send configured MQTT messages to keen IO as events for later analysis.
 
+![System Diagram of keenmqtt](docs/system_diagram.png)
+
 ### The problem
 IoT data platforms are often a big investment in time and sometimes money, so often a simple MQTT set up is used. This should not prevent one from being able to perform historical analysis of data points.
+
+See the **[blog article](https://zoetrope.io/tech-blog/simple-mqtt-iot-logging)** with a live example.
 
 ### The solution
 keenmqtt is a simple bridge which will listen for specified MQTT messages and log them on your KeenIO project. This complete history of events will allow you to:
@@ -26,13 +30,22 @@ Or clone/download the repo, run `python setup.py install` in the root.
 ## Usage
 
 ### Command Line
-Running the stand alone package requires a config file, see `example/config.yaml` for a template.
+Running the stand alone package requires a config file, see `example/config.yaml` for a template. The CLI currently assumes that the MQTT system uses JSON messages and that all fields will be logged in the keenIO event.
 
 After installing, run the following to log events:
 
 ```bash
 	keenmqtt -c config.yaml
 ```
+
+A config file contains connection details for the MQTT broker, as well as a mapping of MQTT topic patterns to keenIO collections. For example, if you are publishing temperature events:
+
+```yaml
+collection_mappings:
+    'temperature/+': temperature
+```
+
+Any number of mappings can be added.
 
 ### In your program
 keenMQTT has been specifically designed so that almost any part of the pipeline can be overriden or customised.
