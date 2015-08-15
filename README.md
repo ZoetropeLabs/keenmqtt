@@ -30,13 +30,22 @@ Or clone/download the repo, run `python setup.py install` in the root.
 ## Usage
 
 ### Command Line
-Running the stand alone package requires a config file, see `example/config.yaml` for a template.
+Running the stand alone package requires a config file, see `example/config.yaml` for a template. The CLI currently assumes that the MQTT system uses JSON messages and that all fields will be logged in the keenIO event.
 
 After installing, run the following to log events:
 
 ```bash
 	keenmqtt -c config.yaml
 ```
+
+A config file contains connection details for the MQTT broker, as well as a mapping of MQTT topic patterns to keenIO collections. For example, if you are publishing temperature events:
+
+```yaml
+collection_mappings:
+    'temperature/+': temperature
+```
+
+Any number of mappings can be added.
 
 ### In your program
 keenMQTT has been specifically designed so that almost any part of the pipeline can be overriden or customised.
